@@ -1,0 +1,5 @@
+.\Grant-CosmosDBDataPlaneAccess.ps1 -ResourceGroupName rg-azfdev -AccountName azfcosmosdb -PrincipalId 424ae1e0-3ce4-4879-82c8-a0a5ae18427d 
+
+powershell -ExecutionPolicy Bypass -File .\Grant-CosmosDBDataPlaneAccess.ps1 -ResourceGroupName rg-azfdev -AccountName azfcosmosdb -PrincipalId 424ae1e0-3ce4-4879-82c8-a0a5ae18427d
+
+Based on the information here #fetch https://learn.microsoft.com/en-gb/azure/cosmos-db/nosql/how-to-grant-data-plane-access?tabs=built-in-definition%2Ccsharp&pivots=azure-interface-cli#permission-model, create a powershell script that chieves this.

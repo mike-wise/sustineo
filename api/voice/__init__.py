@@ -2,6 +2,8 @@ from typing import Optional
 from pydantic import BaseModel
 from fastapi import APIRouter, Response, status
 from azure.cosmos.exceptions import CosmosResourceNotFoundError
+from azure.identity.aio import DefaultAzureCredential
+
 
 from api.model import Configuration
 from api.voice.common import (
@@ -9,6 +11,9 @@ from api.voice.common import (
     load_prompty_config,
     seed_configurations,
 )
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 router = APIRouter(
@@ -29,6 +34,7 @@ class Config(BaseModel):
 
 @router.get("/")
 async def get_configurations():
+    print("get_configurations - 0")
     async with get_cosmos_container() as container:
         items = container.read_all_items()
         configurations: list[Configuration] = []
@@ -43,6 +49,8 @@ async def get_configurations():
                 )
             )
 
+        msg = f"Number of configs found:{len(configurations)}"
+        print(msg)
         if len(configurations) == 0:
             configurations = await seed_configurations(container)
 
@@ -74,6 +82,7 @@ async def create_configuration(
     configuration: Config,
     response: Response,
 ) -> Configuration:
+    print("Posting / from voice/__init__.py")
     async with get_cosmos_container() as container:
         config = load_prompty_config(configuration.content)
 

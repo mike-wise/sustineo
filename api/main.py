@@ -1,6 +1,11 @@
 import os
 import json
 import asyncio
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from pathlib import Path
 from typing import Literal
 from openai import AsyncAzureOpenAI
@@ -20,13 +25,12 @@ from api.agent import router as agent_router
 from api.agent.common import get_custom_agents, create_foundry_thread
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 
-from dotenv import load_dotenv
 
-load_dotenv()
 
 AZURE_VOICE_ENDPOINT = os.getenv("AZURE_VOICE_ENDPOINT") or ""
 AZURE_VOICE_KEY = os.getenv("AZURE_VOICE_KEY", "fake_key")
 COSMOSDB_CONNECTION = os.getenv("COSMOSDB_CONNECTION", "fake_connection")
+print("COSMOSDB_CONNECTION:", COSMOSDB_CONNECTION)
 SUSTINEO_STORAGE = os.environ.get("SUSTINEO_STORAGE", "EMPTY")
 LOCAL_TRACING_ENABLED = os.getenv("LOCAL_TRACING_ENABLED", "false").lower() == "true"
 
@@ -58,6 +62,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+all_routes =[]
+
+
+def get_routes():
+    reserved_routes = ["/openapi.json", "/docs", "/docs/oauth2-redirect", "/redoc"]
+    for route in app.routes:
+        if route.path not in reserved_routes:
+            if route.name is not None:
+                version = getattr(route.endpoint, "_api_version", (2, 0))
+                all_routes.append("/v" + str(version[0]) + route.path)
+
+
+@app.get("/endpoints")
+async def index():
+    get_routes()
+    return { "endpoints": all_routes }
 
 class SimpleMessage(BaseModel):
     name: str
@@ -93,6 +114,9 @@ async def get_image(image_id: str):
 
 @app.websocket("/api/voice/{id}")
 async def voice_endpoint(id: str, websocket: WebSocket):
+    print(f"voice_endpoint start id:{id}")
+    print(f"endpoint:{AZURE_VOICE_ENDPOINT}")
+    print(f"key:{AZURE_VOICE_KEY}")
 
     connection = await connections.connect(id, websocket)
 
@@ -138,6 +162,8 @@ async def voice_endpoint(id: str, websocket: WebSocket):
                 args["time"] = settings["time"]
 
             prompt_settings = await get_default_configuration_data(**args)
+            print(f"configuration args for {user}:",args)
+            print("prompt_settings:",prompt_settings)
             if prompt_settings is None:
                 await connection.send_update(
                     Update.exception(
@@ -151,6 +177,7 @@ async def voice_endpoint(id: str, websocket: WebSocket):
 
             # create a new thread in the foundry
             thread_id = await create_foundry_thread()
+            print("thread_id",thread_id)
 
             session = RealtimeSession(
                 realtime=realtime_client,

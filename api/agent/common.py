@@ -29,7 +29,7 @@ async def get_custom_agents() -> dict[str, Prompty]:
     global custom_agents
     agents_dir = Path(__file__).parent / "agents"
     if not agents_dir.exists():
-        # print(f"No custom agents found in {agents_dir}")
+        print(f"No custom agents found in {agents_dir}")
         return {}
 
     custom_agents.clear()
@@ -39,6 +39,8 @@ async def get_custom_agents() -> dict[str, Prompty]:
         custom_agents[prompty_agent.id] = prompty_agent
         print(f"Loaded agent: {agent_name}")
 
+    print(f"Total custom agents loaded: {len(custom_agents)}")
+    print(f"Custom agents: {custom_agents.keys()}")
     return custom_agents
 
 
@@ -67,6 +69,9 @@ def get_client_agents() -> dict[str, Agent]:
 async def get_foundry_project_client():
     """Get a context manager for the Foundry project client."""
     creds = DefaultAzureCredential()
+    print("get_foundry_project_client")
+    print("FOUNDRY_CONNECTION:",FOUNDRY_CONNECTION)
+    print("creds:",creds)
     project_client = AIProjectClient.from_connection_string(
         conn_str=FOUNDRY_CONNECTION, credential=creds
     )
@@ -107,6 +112,7 @@ async def get_foundry_agents() -> dict[str, Agent]:
             )
             for agent in agents.data
         }
+        print(f"got foundry_agents {foundry_agents}")
 
         return foundry_agents
 
@@ -120,6 +126,7 @@ async def execute_foundry_agent(
     notify: AgentUpdateEvent,
 ):
     """Execute a Foundry agent."""
+    print(f"Executing a Foundry agent: {agent_id}")
 
     async with get_foundry_project_client() as project_client:
         server_agent = await project_client.agents.get_agent(agent_id)
@@ -143,6 +150,7 @@ async def execute_foundry_agent(
 async def create_foundry_thread():
     async with get_foundry_project_client() as project_client:
         thread = await project_client.agents.create_thread()
+        print(f"Created foundry thread: {thread.id}")
         return thread.id
 
 
@@ -161,6 +169,7 @@ async def create_thread_message(
             metadata=metadata,
             attachments=attachments,
         )
+        print(f"Created message:{message.id} foundry thread: {thread_id}")
         return message.id
 
 

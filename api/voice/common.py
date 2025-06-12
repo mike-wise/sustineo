@@ -13,6 +13,7 @@ from prompty.tracer import trace
 
 from azure.cosmos import PartitionKey
 from azure.cosmos.aio import CosmosClient, ContainerProxy
+from azure.identity.aio import DefaultAzureCredential
 
 from openai.types.beta.realtime.session_update_event import SessionTool
 from api.model import Configuration, DefaultConfiguration
@@ -25,6 +26,7 @@ CONTAINER_NAME = "VoiceConfigurations"
 
 async def seed_configurations(container: ContainerProxy) -> list[Configuration]:
     configs = []
+    print("Seeding configurations in voice/common.py...")
     # Load default configuration from file
     config = await load_prompty_file("voice.prompty")
     if config:
@@ -89,6 +91,7 @@ def load_prompty(contents: str, date: datetime = datetime.now()) -> Prompty:
 
 
 def load_prompty_config(contents: str, default: bool = False) -> Configuration:
+    print("load_prompty_config in voice/common.py contents:",contents)
     matter = parse(contents)
     atttributes = matter.pop("attributes", {})
     config = Configuration(
@@ -104,6 +107,7 @@ async def load_prompty_file(
     prompty: str, default: bool = False
 ) -> Union[Configuration, None]:
     file = Path(__file__).parent / prompty
+    print(f"Loading Prompty file: {file} in voice/common")
     config = None
     try:
         async with aiofiles.open(file, "r", encoding="utf-8") as f:
@@ -115,16 +119,31 @@ async def load_prompty_file(
     finally:
         return config
 
+async def dump_principal_id():
+    aad_credentials = DefaultAzureCredential()
+    token = await aad_credentials.get_token("https://management.azure.com/.default")
+    import base64
+    import json
+    payload = token.token.split('.')[1]
+    payload += '=' * (-len(payload) % 4)
+    decoded = base64.urlsafe_b64decode(payload)
+    claims = json.loads(decoded)
+    print(claims)
 
 @contextlib.asynccontextmanager
 async def get_cosmos_container():
     # Create a Cosmos DB client
-    client = CosmosClient.from_connection_string(COSMOSDB_CONNECTION)
+    # client = CosmosClient.from_connection_string(COSMOSDB_CONNECTION)
+    await dump_principal_id()
+
+    aad_credentials = DefaultAzureCredential()
+    print(aad_credentials)
+    client = CosmosClient("https://azfcosmosdb.documents.azure.com:443/",aad_credentials)
     database = await client.create_database_if_not_exists(DATABASE_NAME)
     container = await database.create_container_if_not_exists(
         id=CONTAINER_NAME,
         partition_key=PartitionKey(path="/id"),
-        offer_throughput=400,
+#        offer_throughput=400,
     )
     try:
         yield container

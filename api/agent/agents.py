@@ -9,6 +9,18 @@ from api.agent.decorators import agent
 from api.model import AgentUpdateEvent, Content
 from api.agent.storage import save_image_blobs
 from api.agent.common import execute_foundry_agent, post_request
+from typing import Annotated
+import uuid
+import tweepy
+from api.agent.storage import get_storage_client
+import requests                 # ← keep, still used for the image GET
+
+# Twitter Auth (use environment variables for secrets)
+TW_API_KEY = os.environ.get("TW_API_KEY", "")
+TW_API_SECRET = os.environ.get("TW_API_SECRET", "")
+TW_ACCESS_TOKEN = os.environ.get("TW_ACCESS_TOKEN", "")
+TW_ACCESS_TOKEN_SECRET = os.environ.get("TW_ACCESS_TOKEN_SECRET", "")
+TW_BEARER_TOKEN = os.environ.get("TW_BEARER_TOKEN", "")
 
 
 AZURE_IMAGE_ENDPOINT = os.environ.get("AZURE_IMAGE_ENDPOINT", "EMPTY").rstrip("/")
@@ -282,4 +294,118 @@ The post should be in markdown format.
         query=f"Can you write a LinkedIn post based on the following content?\n\n{content}",
         tools={},
         notify=notify,
+    )
+
+
+@agent(
+    name="Post Tweet with Image",
+    description="""
+        Posts a tweet with an image to Twitter. 
+        You will receive as input:
+        - content (string): Body of the post or finalized draft.
+        - image_url (string, optional): Format should always start with https://sustineo-api.jollysmoke-a2364653.eastus2.azurecontainerapps.io/images/
+        - example image_url: https://sustineo-api.jollysmoke-a2364653.eastus2.azurecontainerapps.io/images/acd7fe97-8d22-48ca-a06c-d38b769a8924.png
+        - use the provided image_url
+    """
+)
+async def post_tweet_with_image(
+    image_url: Annotated[
+        str,
+        "Format should always start with https://sustineo-api.jollysmoke-a2364653.eastus2.azurecontainerapps.io/images/",
+    ],
+    content: Annotated[str, "Text of the tweet (max 280 chars)"],
+    notify: AgentUpdateEvent,
+):
+    await notify(id="post_tweet_image", status="run in_progress", information="Downloading image …")
+
+    # ------------------------------------------------------------------
+    # Setp 1: Download the Image
+    # OAuth 1.0a session – used for BOTH upload and status update
+    # ------------------------------------------------------------------
+    auth_v1 = tweepy.OAuth1UserHandler(
+        TW_API_KEY, TW_API_SECRET, TW_ACCESS_TOKEN, TW_ACCESS_TOKEN_SECRET
+    )
+    api_v1 = tweepy.API(auth_v1, wait_on_rate_limit=True)
+
+    # Download the image ------------------------------------------------
+    await notify(
+    id="post_tweet_image",
+    status="run in_progress",
+    information="Downloading image …"
+    )
+
+    try:
+        image_response = requests.get(image_url, timeout=10)
+        image_response.raise_for_status()
+
+        with open("temp_image_upload.png", "wb") as f:
+            f.write(image_response.content)
+
+        await notify(
+            id="post_tweet_image",
+            status="step completed",
+            information="Image downloaded"
+        )
+
+    except Exception as exc:
+        await notify(
+            id="post_tweet_image",
+            status="run failed",
+            information=f"Failed to download image: {exc}"
+        )
+
+    
+    # ------------------------------------------------------------------
+    # Setp 2: Upload the Image to Twitter
+    # OAuth 1.0a session – used to upload media to Twitter/X. This is required
+    # ------------------------------------------------------------------
+    await notify(id="post_tweet_image",
+                 status="step in_progress",
+                 information="Uploading image to Twitter …")
+
+    try:
+        media = api_v1.media_upload("temp_image_upload.png")
+        media_id = media.media_id_string
+    except Exception as exc:
+        await notify(
+            id="post_tweet_image",
+            status="run failed",
+            information=f"Error uploading image: {exc}",
+        )
+        return
+
+    await notify(id="post_tweet_image",
+                 status="step completed",
+                 information="Image uploaded")
+    
+    # ------------------------------------------------------------------
+    # Step 3: Post the Tweet with the Image
+    # Post tweet (v2 – OAuth 2.0 user-context). Required to use OAth 2.0
+    # ------------------------------------------------------------------
+    await notify(id="post_tweet_image", status="step in_progress", information="Posting tweet …")
+
+    payload = {"text": content, "media": {"media_ids": [media_id]}}
+    headers = {
+        "Authorization": f"Bearer {TW_BEARER_TOKEN}",
+        "Content-Type": "application/json",
+    }
+    resp = requests.post("https://api.twitter.com/2/tweets", headers=headers, json=payload)
+
+    if resp.status_code not in (200, 201):
+        await notify(
+            id="post_tweet_image",
+            status="run failed",
+            information=f"Error posting tweet: {resp.text}",
+        )
+        return
+
+    tweet_id = resp.json().get("data", {}).get("id", "")
+    tweet_url = f"https://x.com/i/web/status/{tweet_id}" if tweet_id else "(tweet created)"
+
+    await notify(
+        id="post_tweet_image",
+        status="run completed",
+        information="Tweet posted!",
+        content=Content(type="text", content=[{"type": "text", "value": f"Tweeted: {tweet_url}"}]),
+        output=True,
     )
