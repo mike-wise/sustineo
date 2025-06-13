@@ -1,0 +1,9 @@
+     -find: Locate a specified object in the environment.
+     -look: Scan or observe the surroundings for relevant items or features.
+     -grasp: Securely grip a target object with the robot’s end effector.
+     -pick: Lift and hold an object from its current position.
+     -bring: Transport an object from its location to a designated destination.
+     -place: Set an object down at a specified location.
+     -release: Let go of a held object, leaving it in its current position.
+     -navigate: Move the robot to a target location within the workspace, only if the robot is mobile
+     -sequence: Execute a predefined series of commands in order.

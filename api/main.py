@@ -153,8 +153,9 @@ async def voice_endpoint(id: str, websocket: WebSocket):
             )
 
             # create voice system message
+            user = settings["user"] if "user" in settings else "unnamed user"
             args = {
-                "customer": settings["user"] if "user" in settings else "unnamed user"
+                "customer": user
             }
             if "date" in settings:
                 args["date"] = settings["date"]

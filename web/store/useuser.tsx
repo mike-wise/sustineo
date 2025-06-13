@@ -19,10 +19,10 @@ const availableUsers: { [key: string]: string } = {
 };
 
 const defaultUser: User = {
-  key: "amanda-foster",
-  name: "Amanda Foster",
-  email: "amanda.foster@microsoft.com",
-  avatar: "/images/people/amanda-foster.jpg",
+  key: "mike-wise",
+  name: "Mike Wise",
+  email: "mike.wise@microsoft.com",
+  avatar: "/images/people/mike-wise.jpg",
 };
 
 const defaultUserOri: User = {

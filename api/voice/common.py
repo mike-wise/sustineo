@@ -40,7 +40,7 @@ async def seed_configurations(container: ContainerProxy) -> list[Configuration]:
         )
         configs.append(config)
 
-    config = await load_prompty_file("travel.prompty", True)
+    config = await load_prompty_file("travel.prompty")
     if config:
         await container.upsert_item(
             {
@@ -52,6 +52,17 @@ async def seed_configurations(container: ContainerProxy) -> list[Configuration]:
         )
         configs.append(config)
 
+    config = await load_prompty_file("roboguy.prompty", True)
+    if config:
+        await container.upsert_item(
+            {
+                "id": config.id,
+                "name": config.name,
+                "default": config.default,
+                "content": config.content,
+            }
+        )
+        configs.append(config)
     return configs
 
 
