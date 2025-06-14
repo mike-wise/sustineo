@@ -84,14 +84,17 @@ def do_run(project_client, agid, thid ):
             tool_calls = run.required_action.submit_tool_outputs.tool_calls
             tool_outputs = []
             for tool_call in tool_calls:
+                fname = tool_call.function["name"]
+                dbmsg = f"{type(tool_call)}-{fname}"
+                print(dbmsg)
                 # print(dir(tool_call))
                 # print(tool_call.items)
-                if tool_call.function["name"] in ["fetch_weather","fetch_population"]:
+                if fname in ["fetch_weather","fetch_population"]:
                     # Parse arguments if needed; here we assume 'location' is passed
                     args = json.loads(tool_call.function["arguments"])
-                    if tool_call.function["name"] == "fetch_weather":
+                    if fname == "fetch_weather":
                         output = fetch_weather(args.get("location", ""))
-                    elif tool_call.function["name"] == "fetch_population":
+                    elif fname == "fetch_population":
                         output = fetch_population(args.get("location", ""))
                     tool_outputs.append({"tool_call_id": tool_call.id, "output": output})
             project_client.agents.submit_tool_outputs_to_run(
