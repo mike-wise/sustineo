@@ -432,7 +432,7 @@ async def execute_robot_command(
                  information=f"Executing on {robot_id} cmd:{command}")
 
     try:
-        time.sleep(1)  # Simulate some delay for command execution
+        time.sleep(5)  # Simulate some delay for command execution
 
     except Exception as exc:
         await notify(
@@ -448,6 +448,86 @@ async def execute_robot_command(
                         type="text",
                         content=[{"type": "text", "value":
                                   f"Finished {robot_id} cmd:{command}"}],
+                 ),
+                 output=True
+    )
+
+
+@agent(
+    name="Execute seednoid robot command",
+    description="""
+        Cause a robot to execute a command.
+        You will receive as input:
+        - robot_id (string): ID of the seednoid robot to execute the command on.
+        - command (string): Text of the command to be executed by the robot
+        """
+)
+async def execute_seednoid_robot_command(
+    robot_id: Annotated[str, "ID of the seednoid robot to execute the command on."],
+    command: Annotated[str, "Text of the command to be executed by the robot"],
+    notify: AgentUpdateEvent,
+):
+    await notify(id="execute_seednoid_robot_command",
+                 status="run in_progress",
+                 information=f"Executing on seednoid {robot_id} cmd:{command}")
+
+    try:
+        time.sleep(5)  # Simulate some delay for command execution
+
+    except Exception as exc:
+        await notify(
+            id="execute_seednoid_robot_command",
+            status="run failed",
+            information=f"Failed to execute seednoid {robot_id} {command} exception: {exc}"
+        )
+
+    await notify(id="execute_seednoid_robot_command",
+                 status="run completed",
+                 information="Command executed",
+                 content=Content(
+                        type="text",
+                        content=[{"type": "text", "value":
+                                  f"Finished seednoid{robot_id} cmd:{command}"}],
+                 ),
+                 output=True
+    )
+
+
+@agent(
+    name="Execute ur3e robot command",
+    description="""
+        Cause a ur3e robot to execute a command.
+        You will receive as input:
+        - robot_id (string): ID of the ur3e robot to execute the command on.
+        - command (string): Text of the command to be executed by the robot
+        """
+)
+async def execute_ur3e_robot_command(
+    robot_id: Annotated[str, "ID of the ur3 robot to execute the command on."],
+    command: Annotated[str, "Text of the command to be executed by the robot"],
+    notify: AgentUpdateEvent,
+):
+    await notify(id="execute_ur3e_robot_command",
+                 status="run in_progress",
+                 information=f"Executing on ur3e {robot_id} cmd:{command}")
+
+    try:
+        time.sleep(5)  # Simulate some delay for command execution
+
+    except Exception as exc:
+        await notify(
+            id="execute_ur3e_robot_command",
+            status="run failed",
+            information=f"Failed to execute ur3e {robot_id} {command} exception: {exc}"
+        )
+
+    await notify(id="execute_ur3e_robot_command",
+                 status="run completed",
+                 information="Command executed",
+                 content=Content(
+                        type="text",
+                        content=[{"type": "text", "value":
+                                  f"Finished ur3e {robot_id} cmd:{command}"}],
                  ),
                  output=True
     )
