@@ -60,6 +60,7 @@ async def seed_configurations(container: ContainerProxy) -> list[Configuration]:
                 "name": config.name,
                 "default": config.default,
                 "content": config.content,
+                "tools": config.tools if config.tools else [],
             }
         )
         configs.append(config)
@@ -110,6 +111,7 @@ def load_prompty_config(contents: str, default: bool = False) -> Configuration:
         name=atttributes.get("name", "Default"),
         default=default,
         content=contents,
+        tools=atttributes.get("tools", []),
     )
     return config
 
@@ -190,7 +192,7 @@ def convert_function_params(params: list[dict]) -> dict:
             }
             for p in params
         },
-        "required": [p["name"] for p in params if p["required"]],
+        "required": [p["name"] for p in params if "required" in p and p["required"]],
     }
 
 @trace
@@ -203,6 +205,8 @@ async def get_default_configuration_data(**args) -> Union[DefaultConfiguration, 
         tools: list[SessionTool] = []
         if config.tools is not None and len(config.tools) > 0:
             for tool in config.tools:
+                if "name" not in tool and "id" in tool:
+                    tool["name"] = tool["id"]
                 tools.append(
                     SessionTool(
                         type="function",

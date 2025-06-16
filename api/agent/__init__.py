@@ -91,7 +91,8 @@ async def get_agents():
 @router.get("/function")
 async def get_functions():
     global function_calls
-    return [asdict(f) for f in function_calls.values()]
+    fdict = [asdict(f) for f in function_calls.values()]
+    return fdict
 
 
 @router.get("/{id}")
@@ -99,7 +100,7 @@ async def get_agent(id: str):
     global connections, custom_agents, foundry_agents
     # return agent by id
     if id not in custom_agents:
-        return {"error": "Agent not found"}
+        return {"error": f"Agent {id} not found"}
 
     return {k: v for k, v in custom_agents[id].to_safe_dict().items() if k != "file"}
 

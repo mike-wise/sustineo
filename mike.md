@@ -1,6 +1,6 @@
 # Website
  https://github.com/sethjuarez/sustineo
- 
+
  # Video
  https://www.youtube.com/watch?v=WH9iBu9hT4E
  Evolution Diagram: 5:28
@@ -12,7 +12,7 @@
  Amanda Demo: 23:40
  Evaluators: 32:30
  43:04
- 
+
 # Arch
 https://github.com/sethjuarez/sustineo/blob/copilot/fix-36/readme.md
 
@@ -32,6 +32,21 @@ https://github.com/sethjuarez/sustineo/blob/copilot/fix-37/SETUP.md
 
 
 # Notes
+
+## Installing
+- cd api
+- py -m venv .venv
+- .venv\Scripts\activate.bat
+- pip install -r requirements.txt
+- cd ..
+- python -m uvicorn api.main:app --reload
+
+## Debug
+- cd api
+- .venv\Scripts\activate.bat
+- cd ..
+- code .
+- Debug then Select FastAPI debug configuration
 
 ## Voice Model Deployment
 - The code has gpt-40-realtime-preview, but I couldn't get it to the model to load (diverse 404, and 401 errors)

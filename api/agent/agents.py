@@ -2,6 +2,8 @@ import os
 import io
 import base64
 import json
+import time
+
 from typing import Annotated
 
 import aiohttp
@@ -135,17 +137,17 @@ async def gpt_image_generation(
 @agent(
     name="Image Editing Agent",
     description="""
-    This tool can edit an image based upon a detailed description and a provided image. 
+    This tool can edit an image based upon a detailed description and a provided image.
     Trigger this tool with a description of the edit to be made along with
     a kind parameter that indicates whether the image is a file upload
     or a camera capture. The image will be used as a starting point for the edit.
     The more detailed the description, the better the image will be.
     The image itself will be automatically provided as a file or a camera capture,
-    so you do not need to include the image in the request. If the user is uploading a file, 
-    set the kind to "FILE" - the user will explictly mention an "upload". If the user is 
-    capturing an image with their camera, set the kind to "CAMERA" - the user will explicitly 
+    so you do not need to include the image in the request. If the user is uploading a file,
+    set the kind to "FILE" - the user will explictly mention an "upload". If the user is
+    capturing an image with their camera, set the kind to "CAMERA" - the user will explicitly
     mention a "camera capture" or say "take a picture". IMPORTANT: Do not ask the user to upload an image,
-    or to take a picture, as soon as you issue the function call the UI will handle this for 
+    or to take a picture, as soon as you issue the function call the UI will handle this for
     you based on the kind parameter - it is important that you do not ask the user to upload an image or take a picture,
     as this will cause the UI to not work correctly - just provide the description and the kind parameter.
     The image will be edited based on the description provided.
@@ -186,7 +188,7 @@ async def gpt_image_edit(
     # send image as multipart/form-data
     if image.startswith("data:image/jpeg;base64,"):
         image = image.replace("data:image/jpeg;base64,", "")
-        
+
     form_data = aiohttp.FormData()
     img = io.BytesIO(base64.b64decode(image))
     form_data.add_field("image", img, filename="image.jpg", content_type="image/jpeg")
@@ -264,7 +266,7 @@ async def gpt_image_edit(
 @agent(
     name="BuildEvents - Post to LinkedIn Agent - Local",
     description="""
-You are a publishing agent responsible for posting finalized and approved LinkedIn posts. 
+You are a publishing agent responsible for posting finalized and approved LinkedIn posts.
 
 You will receive as input:
 - title (string): Title of the post.
@@ -300,7 +302,7 @@ The post should be in markdown format.
 @agent(
     name="Post Tweet with Image",
     description="""
-        Posts a tweet with an image to Twitter. 
+        Posts a tweet with an image to Twitter.
         You will receive as input:
         - content (string): Body of the post or finalized draft.
         - image_url (string, optional): Format should always start with https://sustineo-api.jollysmoke-a2364653.eastus2.azurecontainerapps.io/images/
@@ -329,9 +331,9 @@ async def post_tweet_with_image(
 
     # Download the image ------------------------------------------------
     await notify(
-    id="post_tweet_image",
-    status="run in_progress",
-    information="Downloading image …"
+        id="post_tweet_image",
+        status="run in_progress",
+        information="Downloading image …"
     )
 
     try:
@@ -354,7 +356,7 @@ async def post_tweet_with_image(
             information=f"Failed to download image: {exc}"
         )
 
-    
+
     # ------------------------------------------------------------------
     # Setp 2: Upload the Image to Twitter
     # OAuth 1.0a session – used to upload media to Twitter/X. This is required
@@ -377,7 +379,7 @@ async def post_tweet_with_image(
     await notify(id="post_tweet_image",
                  status="step completed",
                  information="Image uploaded")
-    
+
     # ------------------------------------------------------------------
     # Step 3: Post the Tweet with the Image
     # Post tweet (v2 – OAuth 2.0 user-context). Required to use OAth 2.0
@@ -408,4 +410,44 @@ async def post_tweet_with_image(
         information="Tweet posted!",
         content=Content(type="text", content=[{"type": "text", "value": f"Tweeted: {tweet_url}"}]),
         output=True,
+    )
+
+
+@agent(
+    name="Execute robot command",
+    description="""
+        Cause a robot to execute a command.
+        You will receive as input:
+        - robot_id (string): ID of the robot to execute the command on.
+        - command (string): Text of the command to be executed by the robot
+        """
+)
+async def execute_robot_command(
+    robot_id: Annotated[str, "ID of the robot to execute the command on."],
+    command: Annotated[str, "Text of the command to be executed by the robot"],
+    notify: AgentUpdateEvent,
+):
+    await notify(id="execute_robot_command",
+                 status="run in_progress",
+                 information=f"Executing on {robot_id} cmd:{command}")
+
+    try:
+        time.sleep(1)  # Simulate some delay for command execution
+
+    except Exception as exc:
+        await notify(
+            id="execute_robot_command",
+            status="run failed",
+            information=f"Failed to execute {robot_id} {command} exception: {exc}"
+        )
+
+    await notify(id="execute_robot_command",
+                 status="run completed",
+                 information="Command executed",
+                 content=Content(
+                        type="text",
+                        content=[{"type": "text", "value":
+                                  f"Finished {robot_id} cmd:{command}"}],
+                 ),
+                 output=True
     )

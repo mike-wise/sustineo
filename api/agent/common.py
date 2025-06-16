@@ -27,6 +27,7 @@ custom_agents: dict[str, Prompty] = {}
 # load agents from prompty files in directory
 async def get_custom_agents() -> dict[str, Prompty]:
     global custom_agents
+    print("api/agent/common.py - get_custom_agents()")
     agents_dir = Path(__file__).parent / "agents"
     if not agents_dir.exists():
         print(f"No custom agents found in {agents_dir}")
@@ -39,8 +40,8 @@ async def get_custom_agents() -> dict[str, Prompty]:
         custom_agents[prompty_agent.id] = prompty_agent
         print(f"Loaded agent: {agent_name}")
 
-    print(f"Total custom agents loaded: {len(custom_agents)}")
-    print(f"Custom agents: {custom_agents.keys()}")
+    print(f"   Total custom agents loaded: {len(custom_agents)}")
+    print(f"   Custom agents: {custom_agents.keys()}")
     return custom_agents
 
 
@@ -69,9 +70,9 @@ def get_client_agents() -> dict[str, Agent]:
 async def get_foundry_project_client():
     """Get a context manager for the Foundry project client."""
     creds = DefaultAzureCredential()
-    print("get_foundry_project_client")
-    print("FOUNDRY_CONNECTION:",FOUNDRY_CONNECTION)
-    print("creds:",creds)
+    print("api/agent/common.py - get_foundry_project_client()")
+    print("    FOUNDRY_CONNECTION:", FOUNDRY_CONNECTION)
+    print("    creds:", creds)
     project_client = AIProjectClient.from_connection_string(
         conn_str=FOUNDRY_CONNECTION, credential=creds
     )
@@ -84,6 +85,7 @@ async def get_foundry_project_client():
 
 async def get_foundry_agents() -> dict[str, Agent]:
     global foundry_agents
+    print("api/agent/common.py - get_foundry_agents()")
     async with get_foundry_project_client() as project_client:
         agents = await project_client.agents.list_agents()
         foundry_agents = {
@@ -112,7 +114,7 @@ async def get_foundry_agents() -> dict[str, Agent]:
             )
             for agent in agents.data
         }
-        print(f"got foundry_agents {foundry_agents}")
+        print(f"    foundry_agents {foundry_agents}")
 
         return foundry_agents
 
@@ -126,7 +128,10 @@ async def execute_foundry_agent(
     notify: AgentUpdateEvent,
 ):
     """Execute a Foundry agent."""
-    print(f"Executing a Foundry agent: {agent_id}")
+    print("api/agent/common.py - execute_foundry_agent()")
+    print(f"    Executing a Foundry agent: {agent_id} tools: {tools} ")
+    if tools:
+        print(f"    Tools: {list(tools.keys())}")
 
     async with get_foundry_project_client() as project_client:
         server_agent = await project_client.agents.get_agent(agent_id)
@@ -148,9 +153,11 @@ async def execute_foundry_agent(
 
 
 async def create_foundry_thread():
+    """Create a new Foundry thread."""
+    print("api/agent/common.py - create_foundry_thread()")
     async with get_foundry_project_client() as project_client:
         thread = await project_client.agents.create_thread()
-        print(f"Created foundry thread: {thread.id}")
+        print(f"   Created foundry thread: {thread.id}")
         return thread.id
 
 
@@ -161,6 +168,8 @@ async def create_thread_message(
     attachments: list[MessageAttachment] = [],
     metadata: dict[str, str] = {},
 ):
+    """Create a message in a Foundry thread."""
+    print("api/agent/common.py - create_thread_message()")
     async with get_foundry_project_client() as project_client:
         message = await project_client.agents.create_message(
             thread_id=thread_id,
@@ -169,7 +178,9 @@ async def create_thread_message(
             metadata=metadata,
             attachments=attachments,
         )
-        print(f"Created message:{message.id} foundry thread: {thread_id}")
+        print(f"   Created message:{message.id} foundry thread: {thread_id}")
+        print(f"   Message content: {message.content}")
+        print(f"   Message role: {message.role}")
         return message.id
 
 
@@ -177,6 +188,10 @@ async def create_thread_message(
 async def post_request(
     url: str, **kwargs: Unpack[_RequestOptions]
 ) -> AsyncGenerator[dict[str, Any], None]:
+    """Asynchronous context manager for making POST requests."""
+    print(f"api/agent/common.py - post_request()")
+    print(f"   URL: {url}")
+    print(f"   kwargs: {kwargs}")
     async with aiohttp.ClientSession() as session:
         async with session.post(url, **kwargs) as response:
             if response.status != 200:
