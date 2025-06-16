@@ -487,7 +487,7 @@ async def execute_seednoid_robot_command(
                  content=Content(
                         type="text",
                         content=[{"type": "text", "value":
-                                  f"Finished seednoid{robot_id} cmd:{command}"}],
+                                  f"Finished seednoid {robot_id} cmd:{command}"}],
                  ),
                  output=True
     )
