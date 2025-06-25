@@ -33,13 +33,25 @@ https://github.com/sethjuarez/sustineo/blob/copilot/fix-37/SETUP.md
 
 # Notes
 
-## Installing
+## Installing api
 - cd api
 - py -m venv .venv
 - .venv\Scripts\activate.bat
 - pip install -r requirements.txt
 - cd ..
+- setup a cosmos db (documentdb) in your sub
+- az cli login to the right subscription (the one with the cosmosdb)
 - python -m uvicorn api.main:app --reload
+- Open http://127.0.0.1:8000/api/configuration to load cosmos
+
+## Installing web
+- probably want to install nvm or nvm-windows (github) for node version management
+- npm is for pakcage management, not the same
+- `node -v` to get version, needs version 20 or better
+- `nvm list`
+- `nvm install 22.14.0`
+- `npm install` - npm and nvm are different - npm to install needed packages
+- `npm run dev`
 
 ## Debug
 - cd api
@@ -47,6 +59,8 @@ https://github.com/sethjuarez/sustineo/blob/copilot/fix-37/SETUP.md
 - cd ..
 - code .
 - Debug then Select FastAPI debug configuration
+- Have to make cosmosdb instance public (or something)
+- Have to install configurations with http://127.0.0.1:8000/api/configuration
 
 ## Voice Model Deployment
 - The code has gpt-40-realtime-preview, but I couldn't get it to the model to load (diverse 404, and 401 errors)
