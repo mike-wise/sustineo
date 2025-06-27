@@ -16,33 +16,62 @@
 # Arch
 https://github.com/sethjuarez/sustineo/blob/copilot/fix-36/readme.md
 
-
 # Setup
 https://github.com/sethjuarez/sustineo/blob/copilot/fix-37/SETUP.md
 
 
-# backend
+# To Run
+## backend (api)
 - from sustineo root directory
 - `python -m uvicorn api.main:app --reload`
 
-# frontend
+## frontend (web)
 - from sustineo root directory
 - `cd web`
 - `npm run dev`
 
-
 # Notes
 
-## Installing api
-- cd api
-- py -m venv .venv
-- .venv\Scripts\activate.bat
-- pip install -r requirements.txt
-- cd ..
+## Setup dotenv file
+Sample dotenv going in the root of sustineo
+```
+# Azure OpenAI for Voice
+
+AZURE_VOICE_ENDPOINT=https://ai-mwise9711ai638745858620.openai.azure.com/openai/realtime?api-version=2024-10-01-preview&deployment=gpt-4o-realtime-preview
+AZURE_VOICE_KEY=.... random letters ...
+
+
+# Azure OpenAI for Image Generation
+AZURE_IMAGE_ENDPOINT=https://wiseaifoundry.openai.azure.com/
+AZURE_IMAGE_API_KEY=.... random letters ...
+
+# Azure Storage
+SUSTINEO_STORAGE=https://azfmagstorage.blob.core.windows.net/
+
+# Azure Cosmos DB
+# AccountEndpoint=https://azfcosmosdb.documents.azure.com:443/;AccountKey=.... random letters ending in ==semicolon
+COSMOSDB_CONNECTION="AccountEndpoint=https://azfcosmosdb.documents.azure.com:443/;AccountKey=.... random letters ending in ==semicolon"
+
+FOUNDRY_CONNECTION=eastus2.api.azureml.ms;57b15bf0-e8dd-458a-9156-0694edd7ad4e;rg-mwise-6144_ai;mwise-0178
+
+# Optional: Local tracing
+LOCAL_TRACING_ENABLED=true
+```
+
+## Installing and initializing backend (api)
+- `cd api`
+- `py -m venv .venv` (used python 3.13)
+- `.venv\Scripts\activate.bat`
+- `pip install -r requirements.txt`
+- `cd ..`
 - setup a cosmos db (documentdb) in your sub
-- az cli login to the right subscription (the one with the cosmosdb)
-- python -m uvicorn api.main:app --reload
-- Open http://127.0.0.1:8000/api/configuration to load cosmos
+   - you will need to set the key into the .env file
+- `az cli login` to the right subscription (the one with the cosmosdb)
+   - You have to make sure the cosmosdb can be reached (make it public)
+   - everyday this setting will be turned off
+   - It will also oddly wipe your prompt configuration data
+- `python -m uvicorn api.main:app --reload`
+- Open http://127.0.0.1:8000/api/configuration to load cosmos prompt configuration data
 
 ## Installing web
 - probably want to install nvm or nvm-windows (github) for node version management
@@ -51,16 +80,16 @@ https://github.com/sethjuarez/sustineo/blob/copilot/fix-37/SETUP.md
 - `nvm list`
 - `nvm install 22.14.0`
 - `npm install` - npm and nvm are different - npm to install needed packages
-- `npm run dev`
+- `npm run dev` - and then click on link  `http://localhost:5173/` to run
 
 ## Debug
-- cd api
-- .venv\Scripts\activate.bat
-- cd ..
-- code .
+- `cd api`
+- `.venv\Scripts\activate.bat`
+- `cd ..`
+- `code .`
 - Debug then Select FastAPI debug configuration
 - Have to make cosmosdb instance public (or something)
-- Have to install configurations with http://127.0.0.1:8000/api/configuration
+- Have to install configurations with `http://127.0.0.1:8000/api/configuration`
 
 ## Voice Model Deployment
 - The code has gpt-40-realtime-preview, but I couldn't get it to the model to load (diverse 404, and 401 errors)
